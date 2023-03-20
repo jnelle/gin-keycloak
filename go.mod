@@ -1,4 +1,4 @@
-module github.com/tbaehler/gin-keycloak
+module github.com/jnelle/gin-keycloak
 
 require (
 	github.com/bytedance/sonic v1.8.5 // indirect
@@ -15,7 +15,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
+	go.uber.org/zap v1.24.0
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/protobuf v1.30.0 // indirect

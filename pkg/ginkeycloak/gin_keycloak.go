@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -155,25 +154,25 @@ func decodeToken(token *oauth2.Token, config KeycloakConfig) (*KeyCloakToken, er
 	var err error
 	parsedJWT, err := jwt.ParseSigned(token.AccessToken)
 	if err != nil {
-		glog.Errorf("[Gin-OAuth] jwt not decodable: %s", err)
+		zapLog.Sugar().Errorf("[Gin-OAuth] jwt not decodable: %s", err)
 		return nil, err
 	}
 	key, err := getPublicKey(parsedJWT.Headers[0].KeyID, config)
 	if err != nil {
-		glog.Errorf("Failed to get publickey %v", err)
+		zapLog.Sugar().Errorf("Failed to get publickey %v", err)
 		return nil, err
 	}
 
 	err = parsedJWT.Claims(key, &keyCloakToken)
 	if err != nil {
-		glog.Errorf("Failed to get claims JWT:%+v", err)
+		zapLog.Sugar().Errorf("Failed to get claims JWT:%+v", err)
 		return nil, err
 	}
 
 	if config.CustomClaimsMapper != nil {
 		err = config.CustomClaimsMapper(parsedJWT, &keyCloakToken)
 		if err != nil {
-			glog.Errorf("Failed to get custom claims JWT:%+v", err)
+			zapLog.Sugar().Errorf("Failed to get custom claims JWT:%+v", err)
 			return nil, err
 		}
 	}
@@ -196,21 +195,21 @@ func getTokenContainer(ctx *gin.Context, config KeycloakConfig) (*TokenContainer
 	var err error
 
 	if oauthToken, err = extractToken(ctx.Request); err != nil {
-		glog.Errorf("[Gin-OAuth] Can not extract oauth2.Token, caused by: %s", err)
+		zapLog.Sugar().Errorf("[Gin-OAuth] Can not extract oauth2.Token, caused by: %s", err)
 		return nil, false
 	}
 	if !oauthToken.Valid() {
-		glog.Infof("[Gin-OAuth] Invalid Token - nil or expired")
+		zapLog.Sugar().Infof("[Gin-OAuth] Invalid Token - nil or expired")
 		return nil, false
 	}
 
 	if tc, err = GetTokenContainer(oauthToken, config); err != nil {
-		glog.Errorf("[Gin-OAuth] Can not extract TokenContainer, caused by: %s", err)
+		zapLog.Sugar().Errorf("[Gin-OAuth] Can not extract TokenContainer, caused by: %s", err)
 		return nil, false
 	}
 
 	if isExpired(tc.KeyCloakToken) {
-		glog.Errorf("[Gin-OAuth] Keycloak Token has expired")
+		zapLog.Sugar().Errorf("[Gin-OAuth] Keycloak Token has expired")
 		return nil, false
 	}
 
@@ -271,16 +270,16 @@ func authChain(config KeycloakConfig, accessCheckFunctions ...AccessCheckFunctio
 		select {
 		case ok := <-varianceControl:
 			if !ok {
-				glog.V(2).Infof("[Gin-OAuth] %12v %s access not allowed", time.Since(t), ctx.Request.URL.Path)
+				zapLog.Sugar().Infof("[Gin-OAuth] %12v %s access not allowed", time.Since(t), ctx.Request.URL.Path)
 				return
 			}
 		case <-time.After(VarianceTimer):
 			_ = ctx.AbortWithError(http.StatusGatewayTimeout, errors.New("Authorization check overtime"))
-			glog.V(2).Infof("[Gin-OAuth] %12v %s overtime", time.Since(t), ctx.Request.URL.Path)
+			zapLog.Sugar().Infof("[Gin-OAuth] %12v %s overtime", time.Since(t), ctx.Request.URL.Path)
 			return
 		}
 
-		glog.V(2).Infof("[Gin-OAuth] %12v %s access allowed", time.Since(t), ctx.Request.URL.Path)
+		zapLog.Sugar().Infof("[Gin-OAuth] %12v %s access allowed", time.Since(t), ctx.Request.URL.Path)
 	}
 }
 
@@ -291,7 +290,7 @@ func RequestLogger(keys []string, contentKey string) gin.HandlerFunc {
 		err := c.Errors
 		if request.Method != "GET" && err == nil {
 			data, e := c.Get(contentKey)
-			if e != false { //key is non existent
+			if e { //key is non existent
 				values := make([]string, 0)
 				for _, key := range keys {
 					val, keyPresent := c.Get(key)
@@ -299,7 +298,7 @@ func RequestLogger(keys []string, contentKey string) gin.HandlerFunc {
 						values = append(values, val.(string))
 					}
 				}
-				glog.Infof("[Gin-OAuth] Request: %+v for %s", data, strings.Join(values, "-"))
+				zapLog.Sugar().Infof("[Gin-OAuth] Request: %+v for %s", data, strings.Join(values, "-"))
 			}
 		}
 	}
