@@ -13,6 +13,9 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
 	github.com/stretchr/testify v1.8.2
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/protobuf v1.30.0 // indirect
